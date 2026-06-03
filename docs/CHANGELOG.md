@@ -6,6 +6,16 @@ Format: `[vX.Y.Z] — YYYY-MM-DD` · Types: `Added` `Changed` `Fixed` `Removed` 
 
 ---
 
+## [v2.2.0] — 2026-06-03
+
+### Added
+- `docs/ONBOARDING.md` — new developer onboarding guide covering platform overview, access setup, codebase structure, key concepts, step-by-step guides for pages/functions/entities, common patterns, gotchas, and a "where to find things" reference table
+
+### Fixed
+- `components/layout/Sidebar.jsx` — sidebar category now auto-opens when navigating to a page in a collapsed category; added `useEffect` watching `location.pathname` to re-evaluate `openCategories` state on route change (bug §10.1); added `useEffect` to imports
+
+---
+
 ## [v2.1.0] — 2026-06-03
 
 ### Added
