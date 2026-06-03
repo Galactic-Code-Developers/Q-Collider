@@ -1,6 +1,6 @@
 # Q-Collider Developer Update Guide
 
-**SDQC Lab · Quantum Research Platform · v2.1**  
+**SDQC Lab · Quantum Research Platform · v2.2**  
 Last reviewed: June 2026
 
 > This document tracks what areas of the platform need updates, improvements, or attention, with a clear completion status for each. Use this as the living checklist for development sprints and onboarding new contributors.
@@ -49,11 +49,11 @@ Last reviewed: June 2026
 ### 1.2 Sidebar (`components/layout/Sidebar.jsx`)
 | Status | Item |
 |---|---|
-| ✅ | Collapsible sidebar with icon-only mode (64px / `w-16`) |
+| ✅ | Collapsible sidebar with icon-only mode (64px) |
 | ✅ | Category-grouped collapsible nav sections |
 | ✅ | Role/account-type gating via `canSeeItem()` |
 | ✅ | Active link styling |
-| 🔴 | **BUG** — `openCategories` state is initialised on mount by checking `location.pathname` once; it is never re-evaluated when the pathname changes. Navigating to a page in a collapsed category does not auto-open that category. See §10.1. |
+| ✅ | `openCategories` auto-opens correct category on route change — fixed 2026-06-03 (§10.1) |
 | ⚪ | No keyboard navigation / accessibility (ARIA) support |
 
 ### 1.3 User Dashboard (`pages/UserDashboard.jsx`)
@@ -73,11 +73,10 @@ Last reviewed: June 2026
 ### 2.1 User Registration Flow
 | Status | Item |
 |---|---|
-| ✅ | **Primary mechanism:** `useEnsureSubscriberProfile` hook mounted in `AppLayout` (`components/auth/EnsureSubscriberProfile.jsx`) runs on every authenticated page load and auto-creates an `AccessProfiles` record if one is missing. **Do not remove this hook.** |
-| ✅ | `onNewUserRegistration` backend function creates `AccessProfiles` on self-registration as a server-side backup |
-| ✅ | `AccessAndMembership.jsx` contains a tertiary fallback that creates a profile on first visit to that specific page |
-| 🔴 | **BUG** — `onNewUserRegistration` does NOT fire for admin-invited users (they bypass the User `create` event). Invited users rely on the `useEnsureSubscriberProfile` hook to receive a profile. See §10.3. |
-| 🔵 | Planned: Add invitation webhook or post-login hook to ensure `onNewUserRegistration` handles all registration paths. |
+| ✅ | `onNewUserRegistration` function creates `AccessProfiles` record on self-registration |
+| ✅ | `AccessAndMembership.jsx` fallback creates profile on first visit for invited users |
+| 🔴 | **BUG** — `onNewUserRegistration` does NOT fire for admin-invited users. Invited users arrive without an `AccessProfiles` record. See §10.3. |
+| 🔵 | Planned: Add invitation webhook or post-login hook to ensure profile creation regardless of registration method. |
 
 ### 2.2 Role & Permission System
 | Status | Item |
@@ -92,7 +91,7 @@ Last reviewed: June 2026
 ### 2.3 Auth Context (`lib/AuthContext.jsx`)
 | Status | Item |
 |---|---|
-| ✅ | `useAuth()` hook provides `user`, `isLoadingAuth`, `isLoadingPublicSettings`, `authError` |
+| ✅ | `useAuth()` hook provides `user`, `isLoadingAuth`, `authError` |
 | ✅ | `user_not_registered` error surfaces `UserNotRegisteredError` component |
 | ✅ | Loading screen shown during auth resolution |
 | 🟡 | No refresh/retry on transient auth errors |
@@ -156,7 +155,7 @@ Last reviewed: June 2026
 |---|---|---|
 | ✅ | `SiteOnboardingWizard` | 6-step wizard, automated validation, session persistence |
 | ✅ | `SiteTrustDashboard` | Trust table, certification records, node reliability, auto-certification |
-| 🟡 | `CampaignManagement` | Campaign creation, site assignment, job scheduling work; **pause/resume campaign** — paused campaigns are displayed but `scheduleCampaignJobs` always sets status to `active` and does not handle paused state |
+| 🟡 | `CampaignManagement` | Campaign creation, site assignment, job scheduling work; **pause/resume campaign** button exists but `scheduleCampaignJobs` does not handle paused state |
 | ✅ | `ColliderProgramComparison` | Program selector, comparison charts, recommendation panel, run buttons |
 | 🟡 | `CorrelationAnalytics` | Correlation matrix heatmap works; **pairwise scatter plot on cell click** is not implemented |
 | 🟡 | `StatisticalLimits` | Exclusion curve and CLs generation work; **hover readout** on curve is not wired |
@@ -210,7 +209,7 @@ Last reviewed: June 2026
 |---|---|---|
 | ✅ | `clusterManager` | Node health, job assignment, cluster ops |
 | ✅ | `scheduleJob` | Add job to queue |
-| ✅ | `scheduleCampaignJobs` | Bulk schedule for a campaign; always sets campaign status to `active` — does not respect paused state |
+| ✅ | `scheduleCampaignJobs` | Bulk schedule for a campaign |
 | ✅ | `nodeHealthMonitor` | Heartbeat and health check |
 | ✅ | `registerSiteHeartbeat` | Update site last-seen |
 | ✅ | `updateNodeReliability` | Recalculate node reliability score |
@@ -289,7 +288,7 @@ Last reviewed: June 2026
 | ✅ | `updateKnowledgeMetrics` | Recalculate graph metrics |
 | ✅ | `createProgramProposal` | Submit program proposal |
 | ✅ | `startProposalVoting` | Open voting on proposal |
-| 🟡 | `castProposalVote` | Accepts votes but does NOT check `can_vote_on_programs` permission server-side — any authenticated user can vote |
+| 🟡 | `castProposalVote` | Accepts votes but does NOT check `can_vote_on_programs` permission server-side |
 | ✅ | `finalizeProposalVote` | Close and tally votes |
 
 ### 4.10 Dataset
@@ -302,7 +301,7 @@ Last reviewed: June 2026
 ### 4.11 User Registration
 | Status | Function | Notes |
 |---|---|---|
-| 🟡 | `onNewUserRegistration` | Creates `AccessProfiles` on self-registration only; admin-invited users bypass this hook. The `useEnsureSubscriberProfile` hook in `AppLayout` is the primary safety net for all users — see §10.3 |
+| 🟡 | `onNewUserRegistration` | Creates `AccessProfiles` on self-registration only; invited users bypass this hook — see §10.3 |
 
 ---
 
@@ -352,7 +351,7 @@ Last reviewed: June 2026
 | Status | Item | Notes |
 |---|---|---|
 | ✅ | `globals.css` — active dark space theme token values | All theme changes MUST go here |
-| 🔴 | **CONFLICT** — `index.css` (default shadcn light tokens) is imported in `main.jsx`. `globals.css` is imported separately (inside `App.jsx` or a component). Both files define `:root` CSS variables — whichever is imported last wins. Editing `index.css` has no visible effect and will confuse new developers. The fix is to remove the `index.css` import from `main.jsx`. |
+| 🔴 | **CONFLICT** — `main.jsx` imports `index.css` (default shadcn light tokens). `globals.css` (dark space theme) is not imported anywhere in the current codebase, meaning `index.css` is the active stylesheet. All theme changes should go in `globals.css` and it must be wired up as the CSS entry point — currently it has no effect. |
 | ✅ | Tailwind config correctly maps tokens via `hsl(var(...))` |
 | 🔴 | **PURGE RISK** — Dynamic class interpolation (e.g. `` `bg-${color}-500` ``) gets purged at build time. Only literal class strings in source survive. See `UserDashboard.jsx`'s `accent` object for the correct pattern. |
 | ✅ | Glow utilities (`.glow-cyan`, `.glow-magenta`, `.text-glow-cyan`, `.grid-bg`) defined in `globals.css` |
@@ -407,6 +406,8 @@ All documentation lives under `src/docs/`.
 | ✅ | `src/docs/DEVELOPER.md` | Comprehensive developer reference — up to date as of June 2026 |
 | ✅ | `src/docs/USERGUIDE.md` | Full user-facing guide covering all 50+ pages |
 | ✅ | `src/docs/developerguide.md` | This document — update status tracker |
+| ✅ | `src/docs/CHANGELOG.md` | Version history of all platform changes |
+| ✅ | `src/docs/ONBOARDING.md` | Developer onboarding guide — platform overview, access, codebase structure, patterns, and gotchas |
 | ✅ | `src/docs/howto-discovery-analysis.md` | How-to for Discovery & Analysis modules |
 | ✅ | `src/docs/howto-theory-modeling.md` | How-to for Theory & Modeling |
 | ✅ | `src/docs/howto-simulation-validation.md` | How-to for Simulation & Validation |
@@ -415,31 +416,18 @@ All documentation lives under `src/docs/`.
 | ✅ | `src/docs/howto-site-campaign-management.md` | How-to for Site & Campaign Management |
 | ✅ | `src/docs/howto-contributions-recognition.md` | How-to for Contributions & Recognition |
 | ✅ | `src/docs/howto-settings-access.md` | How-to for Settings & Access |
-| ⚪ | No `CHANGELOG.md` — no version history of changes |
 | ⚪ | No `API.md` — no formal documentation of backend function input/output schemas |
-| ⚪ | No `ONBOARDING.md` — no step-by-step guide for new developers setting up locally |
 
 ---
 
 ## 10. Known Bugs Tracker
 
-### 10.1 🔴 Sidebar category does not auto-open on navigation
+### 10.1 ✅ Sidebar category does not auto-open on navigation
 - **File:** `components/layout/Sidebar.jsx`
 - **Impact:** High — UX broken when navigating to a page whose category is collapsed
-- **Root cause:** `openCategories` is initialised on mount by checking `location.pathname` once. A `useEffect` watching `location.pathname` is absent, so the state is never re-evaluated as the user navigates.
-- **Fix:** Add a `useEffect` watching `location.pathname` to open the matching category
-- **Status:** ⚪ Not yet fixed
-
-```js
-// Add inside Sidebar component:
-useEffect(() => {
-  navCategories.forEach((cat, i) => {
-    if (cat.items.some(item => item.path === location.pathname)) {
-      setOpenCategories(prev => ({ ...prev, [i]: true }));
-    }
-  });
-}, [location.pathname]);
-```
+- **Root cause:** `openCategories` initialised once on mount — never re-evaluated when `location.pathname` changes
+- **Fix applied:** Added `useEffect` watching `location.pathname` to open the matching category; `useEffect` added to React import
+- **Status:** ✅ Fixed — 2026-06-03
 
 ---
 
@@ -451,11 +439,11 @@ useEffect(() => {
 
 ---
 
-### 10.3 🟡 `onNewUserRegistration` does not run for admin-invited users
-- **Files:** `base44/functions/onNewUserRegistration/entry.ts`, `components/auth/EnsureSubscriberProfile.jsx`
-- **Impact:** Low — invited users are covered by the `useEnsureSubscriberProfile` hook in `AppLayout`, which runs on every authenticated page load and creates the profile if missing. **Do not remove this hook.**
-- **Current safety net:** `useEnsureSubscriberProfile` (primary), `AccessAndMembership.jsx` profile block (tertiary fallback for that page only)
-- **Fix planned:** Post-login hook or invitation webhook so `onNewUserRegistration` handles all registration paths
+### 10.3 🟡 AccessProfiles not created for admin-invited users
+- **Files:** `functions/onNewUserRegistration.js`, `pages/AccessAndMembership.jsx`
+- **Impact:** Medium — invited users cannot see gated pages until they visit `/AccessAndMembership`
+- **Current workaround:** `AccessAndMembership.jsx` creates the record on first visit — **do not remove this fallback**
+- **Fix planned:** Post-login hook or invitation webhook
 - **Status:** 🔵 Planned, not started
 
 ---
@@ -476,26 +464,25 @@ useEffect(() => {
 
 ---
 
-### 10.6 🟡 `globals.css` vs `index.css` dual-file conflict
+### 10.6 🔴 `globals.css` not imported — `index.css` is the active stylesheet
 - **Files:** `src/globals.css`, `src/index.css`, `src/main.jsx`
-- **Impact:** Low — no runtime breakage currently, but confusing for new developers and fragile to import-order changes
-- **Detail:** `main.jsx` imports `index.css`. `globals.css` is imported elsewhere in the component tree. Both define `:root` CSS variables; whichever loads last wins. Editing `index.css` has no intended effect.
+- **Impact:** High — the dark space theme defined in `globals.css` is not loading at all. `main.jsx` imports only `index.css` (shadcn light tokens). Any theme work done in `globals.css` has no effect until it is imported.
+- **Fix:** Replace the `index.css` import in `main.jsx` with `globals.css` (or import `globals.css` after it to ensure the dark theme overrides the defaults)
 - **Rule:** All theme changes go in `globals.css` — never `index.css`
-- **Fix:** Remove the `index.css` import from `main.jsx` and ensure `globals.css` is the single CSS entry point
-- **Status:** 🟡 Documented; structural fix not yet applied
+- **Status:** ⚪ Not yet fixed
 
 ---
 
 ### 10.7 🔵 `castProposalVote` does not check `can_vote_on_programs` server-side
-- **File:** `base44/functions/castProposalVote/entry.ts`
+- **File:** `functions/castProposalVote.js`
 - **Impact:** Medium — any authenticated user can vote even without the permission flag
-- **Fix:** Fetch the user's `AccessProfiles` record and check `profile.can_vote_on_programs` before recording the vote
+- **Fix:** Add `profile.can_vote_on_programs` check after fetching the user's `AccessProfiles` record
 - **Status:** ⚪ Not yet fixed
 
 ---
 
 ### 10.8 🔵 `clusterManager → assignQueuedJobs` ignores `required_trust_tier`
-- **File:** `base44/functions/clusterManager/entry.ts`
+- **File:** `functions/clusterManager.js`
 - **Impact:** Medium — jobs requiring trusted/certified nodes may be assigned to experimental nodes
 - **Fix:** Filter candidate nodes by `SiteTrustProfiles.trust_tier >= job.required_trust_tier`
 - **Status:** ⚪ Not yet fixed
@@ -508,13 +495,13 @@ Ordered by impact + effort ratio (highest priority first):
 
 | Priority | Action | Effort | Impact |
 |---|---|---|---|
-| 🔥 1 | Fix Sidebar `openCategories` bug (§10.1) — add `useEffect` for `location.pathname` | Low | High |
-| 🔥 2 | Fix `castProposalVote` missing permission check (§10.7) | Low | Medium |
-| 🔥 3 | Fix CSS entry point — remove `index.css` from `main.jsx`, make `globals.css` the sole import (§10.6) | Low | Low-Medium |
-| 🔶 4 | Implement `DiscoveryProvenanceTracker` reproducibility check | Medium | Medium |
-| 🔶 5 | Extract shared `navigationConfig.js` (§10.2) | Medium | Medium |
-| 🔶 6 | Add `required_trust_tier` enforcement in `clusterManager` (§10.8) | Low | Medium |
-| 🔶 7 | Add invitation webhook / post-login hook for `onNewUserRegistration` (§10.3) | Medium | Medium |
+| ✅ 1 | ~~Fix Sidebar `openCategories` bug (§10.1)~~ **DONE** — `useEffect` for `location.pathname` added 2026-06-03 | Low | High |
+| 🔥 2 | Fix `globals.css` import — wire it up in `main.jsx` so the dark theme actually loads (§10.6) | Low | High |
+| 🔥 3 | Fix `castProposalVote` missing permission check (§10.7) | Low | Medium |
+| 🔥 4 | Fix `onNewUserRegistration` for invited users (§10.3) | Medium | Medium |
+| 🔶 5 | Implement `DiscoveryProvenanceTracker` reproducibility check | Medium | Medium |
+| 🔶 6 | Extract shared `navigationConfig.js` (§10.2) | Medium | Medium |
+| 🔶 7 | Add `required_trust_tier` enforcement in `clusterManager` (§10.8) | Low | Medium |
 | 🔷 8 | Wire ML auto-completion in `UCMLTheoryLab` | High | Low-Medium |
 | 🔷 9 | Implement pairwise scatter plot in `CorrelationAnalytics` | Medium | Low |
 | 🔷 10 | Add email notifications for collaboration invitations | Medium | Medium |
@@ -522,9 +509,9 @@ Ordered by impact + effort ratio (highest priority first):
 | ⬜ 12 | Build UI for `ContentCollaborations` entity | High | Low |
 | ⬜ 13 | Audit all pages for `-created_at` → `-created_date` sort key fixes (§10.4) | Low | Low |
 | ⬜ 14 | Audit all components for dynamic Tailwind class interpolation (§10.5) | Medium | Low |
-| ⬜ 15 | Add `CHANGELOG.md`, `API.md`, `ONBOARDING.md` | Low | Medium |
+| ✅ 15 | ~~Add `CHANGELOG.md`, `API.md`, `ONBOARDING.md`~~ — `CHANGELOG.md` and `ONBOARDING.md` **DONE**; `API.md` still pending | Low | Medium |
 
 ---
 
-*Q-Collider Developer Update Guide · SDQC Lab · v2.1 · June 2026*  
+*Q-Collider Developer Update Guide · SDQC Lab · v2.2 · June 2026*  
 *Maintain this file whenever a bug is fixed, a feature is completed, or a new issue is identified.*
